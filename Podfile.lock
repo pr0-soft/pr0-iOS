@@ -1,0 +1,50 @@
+PODS:
+  - Alamofire (4.4.0)
+  - AlamofireImage (3.2.0):
+    - Alamofire (~> 4.1)
+  - AlamofireNetworkActivityIndicator (2.1.0):
+    - Alamofire (~> 4.1)
+  - AlamofireObjectMapper (4.1.0):
+    - Alamofire (~> 4.1)
+    - ObjectMapper (~> 2.0)
+  - AsyncSwift (2.0.1)
+  - Cartography (1.0.1)
+  - Material (2.5.1):
+    - Material/Core (= 2.5.1)
+  - Material/Core (2.5.1)
+  - Motion (1.0.5):
+    - Motion/Core (= 1.0.5)
+  - Motion/Core (1.0.5)
+  - Nimble (5.1.1)
+  - ObjectMapper (2.2.5)
+  - Quick (1.1.0)
+
+DEPENDENCIES:
+  - Alamofire (~> 4.2)
+  - AlamofireImage (~> 3.2)
+  - AlamofireNetworkActivityIndicator (~> 2.1)
+  - AlamofireObjectMapper
+  - AsyncSwift (~> 2.0)
+  - Cartography (~> 1.0)
+  - Material (~> 2.4)
+  - Motion (~> 1.0)
+  - Nimble (~> 5.1)
+  - ObjectMapper
+  - Quick (~> 1.0)
+
+SPEC CHECKSUMS:
+  Alamofire: dc44b1600b800eb63da6a19039a0083d62a6a62d
+  AlamofireImage: 157ed682cc81d3b9db4fb90c1f12180ac552d93b
+  AlamofireNetworkActivityIndicator: 4716f6554bdfb9c7cf13b1e0e3af21163129690a
+  AlamofireObjectMapper: 435adc82f5b367679bd9e71c4974a54efd0b2521
+  AsyncSwift: 632138e42ead868b53c745fcde9bf733ce1527ad
+  Cartography: c1460e99395b824d9d75360b0382faeb0b33dcd7
+  Material: 858f56406dd5bcf0e76f6f8e34f0746a409eed6a
+  Motion: 35d2c694cb62b0325c62504e15ffdf3cc3cc7d39
+  Nimble: 415e3aa3267e7bc2c96b05fa814ddea7bb686a29
+  ObjectMapper: fb30f71e08470d1e5a20b199fafe1246281db898
+  Quick: dafc587e21eed9f4cab3249b9f9015b0b7a7f71d
+
+PODFILE CHECKSUM: e4e71c9f87196bd64ff7224fd315f56030c16a74
+
+COCOAPODS: 1.1.1
