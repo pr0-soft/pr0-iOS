@@ -250,7 +250,9 @@ open class CollectionViewCell: UICollectionViewCell, Pulseable, PulseableLayer {
      when subclassing.
      */
 	open func prepare() {
+        backgroundColor = .white
 		contentScaleFactor = Screen.scale
+        
 		prepareVisualLayer()
         preparePulse()
 	}
@@ -274,6 +276,6 @@ extension CollectionViewCell {
     /// Manages the layout for the visualLayer property.
     fileprivate func layoutVisualLayer() {
         visualLayer.frame = bounds
-        visualLayer.cornerRadius = cornerRadius
+        visualLayer.cornerRadius = layer.cornerRadius
     }
 }

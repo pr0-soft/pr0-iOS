@@ -99,19 +99,33 @@ open class CollectionView: UICollectionView {
 		super.init(frame: frame, collectionViewLayout: layout)
 		prepare()
 	}
+    
+    /**
+     An initializer that initializes the object.
+     - Parameter collectionViewLayout: A UICollectionViewLayout reference.
+     */
+    public init(collectionViewLayout layout: UICollectionViewLayout) {
+        super.init(frame: .zero, collectionViewLayout: layout)
+        prepare()
+    }
 	
 	/**
      An initializer that initializes the object.
      - Parameter frame: A CGRect defining the view's frame.
      */
 	public init(frame: CGRect) {
-		super.init(frame: frame, collectionViewLayout: CollectionViewLayout())
-		prepare()
-	}
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 100, height: 100)
+		super.init(frame: frame, collectionViewLayout: layout)
+        prepare()
+    }
 	
 	/// A convenience initializer that initializes the object.
-	public convenience init() {
-		self.init(frame: .zero)
+	public init() {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 100, height: 100)
+        super.init(frame: .zero, collectionViewLayout: layout)
+        prepare()
 	}
 	
 	/**
@@ -121,8 +135,9 @@ open class CollectionView: UICollectionView {
      The super.prepare method should always be called immediately
      when subclassing.
      */
-	open func prepare() {
+    open func prepare() {
+        backgroundColor = .white
 		contentScaleFactor = Screen.scale
-		backgroundColor = .white
+        register(CollectionViewCell.self, forCellWithReuseIdentifier: "CollectionViewCell")
     }
 }

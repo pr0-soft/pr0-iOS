@@ -37,24 +37,17 @@ extension UIViewController {
      through child UIViewControllers.
      */
 	public var statusBarController: StatusBarController? {
-		var viewController: UIViewController? = self
-		while nil != viewController {
-			if viewController is StatusBarController {
-				return viewController as? StatusBarController
-			}
-			viewController = viewController?.parent
-		}
-		return nil
+		return traverseViewControllerHierarchyForClassType()
 	}
 }
 
-open class StatusBarController: RootController {
+open class StatusBarController: TransitionController {
     /**
      A Display value to indicate whether or not to
      display the rootViewController to the full view
      bounds, or up to the toolbar height.
      */
-    open var statusBarDisplay = Display.full {
+    open var displayStyle = DisplayStyle.full {
         didSet {
             layoutSubviews()
         }
@@ -81,53 +74,54 @@ open class StatusBarController: RootController {
         }
     }
     
+    /// An adjustment based on the rules for displaying the statusBar.
+    open var statusBarOffsetAdjustment: CGFloat {
+        return Application.shouldStatusBarBeHidden || statusBar.isHidden ? 0 : statusBar.bounds.height
+    }
+    
     /// A boolean that indicates to hide the statusBar on rotation.
-    open var shouldHideStatusBarOnRotation = true
+    open var shouldHideStatusBarOnRotation = false
     
     /// A reference to the statusBar.
     open let statusBar = UIView()
 	
-	/**
-     To execute in the order of the layout chain, override this
-     method. LayoutSubviews should be called immediately, unless you
-     have a certain need.
-     */
 	open override func layoutSubviews() {
 		super.layoutSubviews()
+        
         if shouldHideStatusBarOnRotation {
             statusBar.isHidden = Application.shouldStatusBarBeHidden
         }
         
-        statusBar.width = view.width
+        statusBar.frame.size.width = view.bounds.width
         
-        switch statusBarDisplay {
+        switch displayStyle {
         case .partial:
-            let h = statusBar.height
-            rootViewController.view.y = h
-            rootViewController.view.height = view.height - h
+            let h = statusBar.bounds.height
+            container.frame.origin.y = h
+            container.frame.size.height = view.bounds.height - h
         case .full:
-            rootViewController.view.frame = view.bounds
+            container.frame = view.bounds
         }
-	}
+        
+        rootViewController.view.frame = container.bounds
+        
+        container.layer.zPosition = statusBar.layer.zPosition + (Application.shouldStatusBarBeHidden ? 1 : -1)
+    }
 	
-	/**
-     Prepares the view instance when intialized. When subclassing,
-     it is recommended to override the prepare method
-     to initialize property values and other setup operations.
-     The super.prepare method should always be called immediately
-     when subclassing.
-     */
 	open override func prepare() {
         super.prepare()
 		prepareStatusBar()
 	}
 }
 
-extension StatusBarController {
+fileprivate extension StatusBarController {
     /// Prepares the statusBar.
-    fileprivate func prepareStatusBar() {
-        statusBar.backgroundColor = .white
-        statusBar.height = 20
+    func prepareStatusBar() {
+        if nil == statusBar.backgroundColor {
+            statusBar.backgroundColor = .white
+        }
+        
+        statusBar.frame.size.height = 20
         view.addSubview(statusBar)
     }
 }

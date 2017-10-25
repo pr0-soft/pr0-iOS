@@ -39,11 +39,11 @@ public enum ContentViewAlignment: Int {
 open class Bar: View {
     /// Will layout the view.
     open var willLayout: Bool {
-        return 0 < width && 0 < height && nil != superview
+        return 0 < bounds.width && 0 < bounds.height && nil != superview && !grid.deferred
     }
     
     open override var intrinsicContentSize: CGSize {
-        return CGSize(width: width, height: height)
+        return bounds.size
     }
     
     /// Should center the contentView.
@@ -108,7 +108,7 @@ open class Bar: View {
     open let contentView = UIView()
     
     /// Left side UIViews.
-    open var leftViews: [UIView] {
+    open var leftViews = [UIView]() {
         didSet {
             for v in oldValue {
                 v.removeFromSuperview()
@@ -118,7 +118,7 @@ open class Bar: View {
     }
     
     /// Right side UIViews.
-    open var rightViews: [UIView] {
+    open var rightViews = [UIView]() {
         didSet {
             for v in oldValue {
                 v.removeFromSuperview()
@@ -142,8 +142,6 @@ open class Bar: View {
      - Parameter aDecoder: A NSCoder instance.
      */
     public required init?(coder aDecoder: NSCoder) {
-        leftViews = []
-        rightViews = []
         super.init(coder: aDecoder)
     }
     
@@ -154,8 +152,6 @@ open class Bar: View {
      - Parameter frame: A CGRect instance.
      */
     public override init(frame: CGRect) {
-        leftViews = []
-        rightViews = []
         super.init(frame: frame)
     }
     
@@ -183,15 +179,6 @@ open class Bar: View {
             return
         }
         
-        guard !grid.deferred else {
-            return
-        }
-        
-        reload()
-    }
-    
-    /// Reloads the view.
-    open func reload() {
         var lc = 0
         var rc = 0
         
@@ -204,9 +191,9 @@ open class Bar: View {
                 b.titleEdgeInsets = .zero
             }
             
-            v.width = v.intrinsicContentSize.width
+            v.frame.size.width = v.intrinsicContentSize.width
             v.sizeToFit()
-            v.grid.columns = Int(ceil(v.width / gridFactor)) + 2
+            v.grid.columns = Int(ceil(v.bounds.width / gridFactor)) + 2
             
             lc += v.grid.columns
             
@@ -221,9 +208,9 @@ open class Bar: View {
                 b.titleEdgeInsets = .zero
             }
             
-            v.width = v.intrinsicContentSize.width
+            v.frame.size.width = v.intrinsicContentSize.width
             v.sizeToFit()
-            v.grid.columns = Int(ceil(v.width / gridFactor)) + 2
+            v.grid.columns = Int(ceil(v.bounds.width / gridFactor)) + 2
             
             rc += v.grid.columns
             
@@ -246,7 +233,7 @@ open class Bar: View {
             }
         }
         
-        let p = width - l - r - contentEdgeInsets.left - contentEdgeInsets.right
+        let p = bounds.width - l - r - contentEdgeInsets.left - contentEdgeInsets.right
         let columns = Int(ceil(p / gridFactor))
         
         if .center == contentViewAlignment {
@@ -265,21 +252,23 @@ open class Bar: View {
         grid.commit()
         contentView.grid.commit()
         
-        divider.reload()
+        layoutDivider()
     }
     
-    /**
-     Prepares the view instance when intialized. When subclassing,
-     it is recommended to override the prepare method
-     to initialize property values and other setup operations.
-     The super.prepare method should always be called immediately
-     when subclassing.
-     */
     open override func prepare() {
         super.prepare()
         heightPreset = .normal
         autoresizingMask = .flexibleWidth
         interimSpacePreset = .interimSpace3
         contentEdgeInsetsPreset = .square1
+        
+        prepareContentView()
+    }
+}
+
+extension Bar {
+    /// Prepares the contentView.
+    fileprivate func prepareContentView() {
+        contentView.contentScaleFactor = Screen.scale
     }
 }

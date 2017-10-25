@@ -12,10 +12,10 @@ target 'pr0' do
   pod 'AlamofireNetworkActivityIndicator', '~> 2.1'
   pod 'AlamofireObjectMapper'
   pod 'ObjectMapper'
-  pod 'Material', '~> 2.4'
+  pod 'Material', '~> 2.10.3'
   pod 'Motion', '~> 1.0'
 
-  pod 'AsyncSwift', '~> 2.0'
+  pod 'AsyncSwift', :git => 'https://github.com/duemunk/Async.git', :tag => '2.0.4'
   pod 'Cartography', '~> 1.0'
 
   target 'pr0Tests' do

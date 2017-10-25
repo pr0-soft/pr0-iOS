@@ -56,7 +56,7 @@ class MainModuleViewController: UIViewController {
 
         navigationController?.navigationBar.tintColor = Colors.lightPrimaryTextColor
 
-        navigationItem.title = (navigationController as? MainModuleNavigationViewController)?.tabType.string()
+        navigationItem.titleLabel.text = (navigationController as? MainModuleNavigationViewController)?.tabType.string()
 
         navigationItem.titleLabel.textColor = Colors.lightPrimaryTextColor
         navigationItem.titleLabel.textAlignment = .center

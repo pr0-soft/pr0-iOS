@@ -38,19 +38,12 @@ public enum NavigationDrawerPosition: Int {
 
 extension UIViewController {
 	/**
-	A convenience property that provides access to the NavigationDrawerController. 
-	This is the recommended method of accessing the NavigationDrawerController
-	through child UIViewControllers.
-	*/
+     A convenience property that provides access to the NavigationDrawerController.
+     This is the recommended method of accessing the NavigationDrawerController
+     through child UIViewControllers.
+     */
 	public var navigationDrawerController: NavigationDrawerController? {
-		var viewController: UIViewController? = self
-		while nil != viewController {
-			if viewController is NavigationDrawerController {
-				return viewController as? NavigationDrawerController
-			}
-			viewController = viewController?.parent
-		}
-		return nil
+		return traverseViewControllerHierarchyForClassType()
 	}
 }
 
@@ -143,7 +136,7 @@ public protocol NavigationDrawerControllerDelegate {
 }
 
 @objc(NavigationDrawerController)
-open class NavigationDrawerController: RootController {
+open class NavigationDrawerController: TransitionController {
 	/**
      A CGFloat property that is used internally to track
      the original (x) position of the container view when panning.
@@ -337,7 +330,7 @@ open class NavigationDrawerController: RootController {
 		guard let v = leftView else {
 			return false
 		}
-		return v.x != -leftViewWidth
+		return v.frame.origin.x != -leftViewWidth
 	}
 	
 	/// Indicates if the rightView is opened.
@@ -345,7 +338,7 @@ open class NavigationDrawerController: RootController {
 		guard let v = rightView else {
 			return false
 		}
-		return v.x != Screen.width
+		return v.frame.origin.x != Screen.width
 	}
 	
 	/**
@@ -415,8 +408,8 @@ open class NavigationDrawerController: RootController {
 		prepare()
 	}
 	
-    open override func transition(to viewController: UIViewController, duration: TimeInterval = 0.5, options: UIViewAnimationOptions = [], animations: (() -> Void)? = nil, completion: ((Bool) -> Void)? = nil) {
-        super.transition(to: viewController, duration: duration, options: options, animations: animations) { [weak self, completion = completion] (result) in
+    open override func transition(to viewController: UIViewController, completion: ((Bool) -> Void)? = nil) {
+        super.transition(to: viewController) { [weak self, completion = completion] (result) in
             guard let s = self else {
                 return
             }
@@ -432,26 +425,28 @@ open class NavigationDrawerController: RootController {
 		toggleStatusBar()
         
         if let v = leftView {
-			v.width = leftViewWidth
-			v.height = view.bounds.height
+			v.frame.size.width = leftViewWidth
+			v.frame.size.height = view.bounds.height
 			leftViewThreshold = leftViewWidth / 2
 			if let vc = leftViewController {
-				vc.view.width = leftViewWidth
-				vc.view.height = v.bounds.height
+				vc.view.frame.size.width = leftViewWidth
+				vc.view.frame.size.height = v.bounds.height
                 vc.view.center = CGPoint(x: leftViewWidth / 2, y: v.bounds.height / 2)
 			}
 		}
 		
 		if let v = rightView {
-			v.width = rightViewWidth
-			v.height = view.bounds.height
+			v.frame.size.width = rightViewWidth
+			v.frame.size.height = view.bounds.height
 			rightViewThreshold = view.bounds.width - rightViewWidth / 2
 			if let vc = rightViewController {
-				vc.view.width = rightViewWidth
-				vc.view.height = v.bounds.height
+				vc.view.frame.size.width = rightViewWidth
+				vc.view.frame.size.height = v.bounds.height
                 vc.view.center = CGPoint(x: rightViewWidth / 2, y: v.bounds.height / 2)
 			}
 		}
+        
+        rootViewController.view.frame = container.bounds
 	}
 	
     open override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -461,16 +456,9 @@ open class NavigationDrawerController: RootController {
             return
         }
         
-        v.position.x = size.width + (isRightViewOpened ? -v.bounds.width : v.bounds.width) / 2
+        v.layer.position.x = size.width + (isRightViewOpened ? -v.bounds.width : v.bounds.width) / 2
 	}
     
-    /**
-     Prepares the view instance when intialized. When subclassing,
-     it is recommended to override the prepare method
-     to initialize property values and other setup operations.
-     The super.prepare method should always be called immediately
-     when subclassing.
-     */
     open override func prepare() {
         super.prepare()
         prepareContentViewController()
@@ -512,7 +500,7 @@ open class NavigationDrawerController: RootController {
                         }
                         
                         v.bounds.size.width = width
-                        v.position.x = -width / 2
+                        v.layer.position.x = -width / 2
                         s.rootViewController.view.alpha = 1
                     }) { [weak self, v = v] _ in
                         guard let s = self else {
@@ -531,7 +519,7 @@ open class NavigationDrawerController: RootController {
                         }
                         
                         v.bounds.size.width = width
-                        v.position.x = width / 2
+                        v.layer.position.x = width / 2
                         s.rootViewController.view.alpha = 0.5
                     }) { [weak self, v = v] _ in
                         guard let s = self else {
@@ -548,15 +536,12 @@ open class NavigationDrawerController: RootController {
             
             if hide {
                 hideView(container: v)
-                v.position.x = -v.bounds.width / 2
+                v.layer.position.x = -v.bounds.width / 2
                 rootViewController.view.alpha = 1
             } else {
-                v.isShadowPathAutoSizing = false
-                
                 showView(container: v)
-                v.position.x = width / 2
+                v.layer.position.x = width / 2
                 rootViewController.view.alpha = 0.5
-                v.isShadowPathAutoSizing = true
             }
             
             layoutSubviews()
@@ -597,7 +582,7 @@ open class NavigationDrawerController: RootController {
                         }
                         
                         v.bounds.size.width = width
-                        v.position.x = s.view.bounds.width + width / 2
+                        v.layer.position.x = s.view.bounds.width + width / 2
                         s.rootViewController.view.alpha = 1
                     }) { [weak self, v = v] _ in
                         guard let s = self else {
@@ -616,7 +601,7 @@ open class NavigationDrawerController: RootController {
                         }
                         
                         v.bounds.size.width = width
-                        v.position.x = s.view.bounds.width - width / 2
+                        v.layer.position.x = s.view.bounds.width - width / 2
                         s.rootViewController.view.alpha = 0.5
                     }) { [weak self, v = v] _ in
                         guard let s = self else {
@@ -633,15 +618,12 @@ open class NavigationDrawerController: RootController {
             
             if hide {
                 hideView(container: v)
-                v.position.x = view.bounds.width + v.bounds.width / 2
+                v.layer.position.x = view.bounds.width + v.bounds.width / 2
                 rootViewController.view.alpha = 1
             } else {
-                v.isShadowPathAutoSizing = false
-                
                 showView(container: v)
-                v.position.x = view.bounds.width - width / 2
+                v.layer.position.x = view.bounds.width - width / 2
                 rootViewController.view.alpha = 0.5
-                v.isShadowPathAutoSizing = true
             }
             
             layoutSubviews()
@@ -692,13 +674,13 @@ open class NavigationDrawerController: RootController {
         
         delegate?.navigationDrawerController?(navigationDrawerController: self, willOpen: .left)
         
-        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.x / velocity)))),
+        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.frame.origin.x / velocity)))),
             animations: { [weak self, v = v] in
                 guard let s = self else {
                     return
                 }
                 
-                v.position.x = v.bounds.width / 2
+                v.layer.position.x = v.bounds.width / 2
                 s.rootViewController.view.alpha = 0.5
             }) { [weak self] _ in
                 guard let s = self else {
@@ -731,13 +713,13 @@ open class NavigationDrawerController: RootController {
         
         delegate?.navigationDrawerController?(navigationDrawerController: self, willOpen: .right)
         
-        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.x / velocity)))),
+        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.frame.origin.x / velocity)))),
             animations: { [weak self, v = v] in
                 guard let s = self else {
                     return
                 }
                 
-                v.position.x = s.view.bounds.width - v.bounds.width / 2
+                v.layer.position.x = s.view.bounds.width - v.bounds.width / 2
                 s.rootViewController.view.alpha = 0.5
             }) { [weak self] _ in
                 guard let s = self else {
@@ -767,13 +749,13 @@ open class NavigationDrawerController: RootController {
         
         delegate?.navigationDrawerController?(navigationDrawerController: self, willClose: .left)
         
-        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.x / velocity)))),
+        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.frame.origin.x / velocity)))),
             animations: { [weak self, v = v] in
                 guard let s = self else {
                     return
                 }
                 
-                v.position.x = -v.bounds.width / 2
+                v.layer.position.x = -v.bounds.width / 2
                 s.rootViewController.view.alpha = 1
             }) { [weak self, v = v] _ in
                 guard let s = self else {
@@ -806,13 +788,13 @@ open class NavigationDrawerController: RootController {
         
         delegate?.navigationDrawerController?(navigationDrawerController: self, willClose: .right)
         
-        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.x / velocity)))),
+        UIView.animate(withDuration: TimeInterval(0 == velocity ? animationDuration : fmax(0.1, fmin(1, Double(v.frame.origin.x / velocity)))),
             animations: { [weak self, v = v] in
                 guard let s = self else {
                     return
                 }
                 
-                v.position.x = s.view.bounds.width + v.bounds.width / 2
+                v.layer.position.x = s.view.bounds.width + v.bounds.width / 2
                 s.rootViewController.view.alpha = 1
             }) { [weak self, v = v] _ in
                 guard let s = self else {
@@ -989,7 +971,7 @@ extension NavigationDrawerController {
     /// Prepares the contentViewController.
     fileprivate func prepareContentViewController() {
         contentViewController.view.backgroundColor = .black
-        prepare(viewController: contentViewController, withContainer: view)
+        prepare(viewController: contentViewController, in: view)
         view.sendSubview(toBack: contentViewController.view)
     }
     
@@ -999,7 +981,7 @@ extension NavigationDrawerController {
             return
         }
         
-        prepare(viewController: leftViewController, withContainer: v)
+        prepare(viewController: leftViewController, in: v)
     }
     
     /// A method that prepares the rightViewController.
@@ -1008,7 +990,7 @@ extension NavigationDrawerController {
             return
         }
         
-        prepare(viewController: rightViewController, withContainer: v)
+        prepare(viewController: rightViewController, in: v)
     }
     
     /// A method that prepares the leftView.
@@ -1026,8 +1008,8 @@ extension NavigationDrawerController {
         view.addSubview(leftView!)
         
         leftView!.isHidden = true
-        leftView!.position.x = -leftViewWidth / 2
-        leftView!.zPosition = 2000
+        leftView!.layer.position.x = -leftViewWidth / 2
+        leftView!.layer.zPosition = 2000
         prepareLeftViewController()
     }
     
@@ -1046,8 +1028,8 @@ extension NavigationDrawerController {
         view.addSubview(rightView!)
         
         rightView!.isHidden = true
-        rightView!.position.x = view.bounds.width + rightViewWidth / 2
-        rightView!.zPosition = 2000
+        rightView!.layer.position.x = view.bounds.width + rightViewWidth / 2
+        rightView!.layer.zPosition = 2000
         prepareRightViewController()
     }
     
@@ -1059,6 +1041,7 @@ extension NavigationDrawerController {
         
         leftPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handleLeftViewPanGesture(recognizer:)))
         leftPanGesture!.delegate = self
+        leftPanGesture!.cancelsTouchesInView = false
         view.addGestureRecognizer(leftPanGesture!)
     }
     
@@ -1082,6 +1065,7 @@ extension NavigationDrawerController {
         
         rightPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handleRightViewPanGesture(recognizer:)))
         rightPanGesture!.delegate = self
+        rightPanGesture!.cancelsTouchesInView = false
         view.addGestureRecognizer(rightPanGesture!)
     }
     
@@ -1147,7 +1131,7 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
         // Animate the panel.
         switch recognizer.state {
         case .began:
-            originalX = v.position.x
+            originalX = v.layer.position.x
             showView(container: v)
             
             delegate?.navigationDrawerController?(navigationDrawerController: self, didBeginPanAt: point, position: .left)
@@ -1155,10 +1139,10 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
             let w = v.bounds.width
             let translationX = recognizer.translation(in: v).x
             
-            v.position.x = originalX + translationX > (w / 2) ? (w / 2) : originalX + translationX
+            v.layer.position.x = originalX + translationX > (w / 2) ? (w / 2) : originalX + translationX
             
-            let a = 1 - v.position.x / v.bounds.width
-            rootViewController.view.alpha = 0.5 < a && v.position.x <= v.bounds.width / 2 ? a : 0.5
+            let a = 1 - v.layer.position.x / v.bounds.width
+            rootViewController.view.alpha = 0.5 < a && v.layer.position.x <= v.bounds.width / 2 ? a : 0.5
             
             if translationX >= leftThreshold {
                 hideStatusBar()
@@ -1171,7 +1155,7 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
             
             delegate?.navigationDrawerController?(navigationDrawerController: self, didEndPanAt: point, position: .left)
             
-            if v.x <= -leftViewWidth + leftViewThreshold || x < -500 {
+            if v.frame.origin.x <= -leftViewWidth + leftViewThreshold || x < -500 {
                 closeLeftView(velocity: x)
             } else {
                 openLeftView(velocity: x)
@@ -1201,7 +1185,7 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
         // Animate the panel.
         switch recognizer.state {
         case .began:
-            originalX = v.position.x
+            originalX = v.layer.position.x
             showView(container: v)
             
             delegate?.navigationDrawerController?(navigationDrawerController: self, didBeginPanAt: point, position: .right)
@@ -1209,10 +1193,10 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
             let w = v.bounds.width
             let translationX = recognizer.translation(in: v).x
             
-            v.position.x = originalX + translationX < view.bounds.width - (w / 2) ? view.bounds.width - (w / 2) : originalX + translationX
+            v.layer.position.x = originalX + translationX < view.bounds.width - (w / 2) ? view.bounds.width - (w / 2) : originalX + translationX
             
-            let a = 1 - (view.bounds.width - v.position.x) / v.bounds.width
-            rootViewController.view.alpha = 0.5 < a && v.position.x >= v.bounds.width / 2 ? a : 0.5
+            let a = 1 - (view.bounds.width - v.layer.position.x) / v.bounds.width
+            rootViewController.view.alpha = 0.5 < a && v.layer.position.x >= v.bounds.width / 2 ? a : 0.5
             
             if translationX <= -rightThreshold {
                 hideStatusBar()
@@ -1225,7 +1209,7 @@ extension NavigationDrawerController: UIGestureRecognizerDelegate {
             
             delegate?.navigationDrawerController?(navigationDrawerController: self, didEndPanAt: point, position: .right)
             
-            if v.x >= rightViewThreshold || x > 1000 {
+            if v.frame.origin.x >= rightViewThreshold || x > 1000 {
                 closeRightView(velocity: x)
             } else {
                 openRightView(velocity: x)

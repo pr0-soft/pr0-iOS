@@ -78,18 +78,11 @@ extension UIViewController {
      through child UIViewControllers.
      */
     public var snackbarController: SnackbarController? {
-        var viewController: UIViewController? = self
-        while nil != viewController {
-            if viewController is SnackbarController {
-                return viewController as? SnackbarController
-            }
-            viewController = viewController?.parent
-        }
-        return nil
+        return traverseViewControllerHierarchyForClassType()
     }
 }
 
-open class SnackbarController: RootController {
+open class SnackbarController: TransitionController {
     /// Reference to the Snackbar.
     open let snackbar = Snackbar()
     
@@ -122,7 +115,7 @@ open class SnackbarController: RootController {
      - Parameter status: A SnackbarStatus enum value.
      */
     @discardableResult
-    open func animate(snackbar status: SnackbarStatus, delay: TimeInterval = 0, animations: ((Snackbar) -> Void)? = nil, completion: ((Snackbar) -> Void)? = nil) -> MotionDelayCancelBlock? {
+    open func animate(snackbar status: SnackbarStatus, delay: TimeInterval = 0, animations: ((Snackbar) -> Void)? = nil, completion: ((Snackbar) -> Void)? = nil) -> MotionCancelBlock? {
         return Motion.delay(delay) { [weak self, status = status, animations = animations, completion = completion] in
             guard let s = self else {
                 return
@@ -182,19 +175,12 @@ open class SnackbarController: RootController {
     
     /// Reloads the view.
     open func reload() {
-        snackbar.x = snackbarEdgeInsets.left
-        snackbar.width = view.width - snackbarEdgeInsets.left - snackbarEdgeInsets.right
+        snackbar.frame.origin.x = snackbarEdgeInsets.left
+        snackbar.frame.size.width = view.bounds.width - snackbarEdgeInsets.left - snackbarEdgeInsets.right
         rootViewController.view.frame = view.bounds
         layoutSnackbar(status: snackbar.status)
     }
     
-    /**
-     Prepares the view instance when intialized. When subclassing,
-     it is recommended to override the prepare method
-     to initialize property values and other setup operations.
-     The super.prepare method should always be called immediately
-     when subclassing.
-     */
     open override func prepare() {
         super.prepare()
         prepareSnackbar()
@@ -202,7 +188,7 @@ open class SnackbarController: RootController {
     
     /// Prepares the snackbar.
     private func prepareSnackbar() {
-        snackbar.zPosition = 10000
+        snackbar.layer.zPosition = 10000
         view.addSubview(snackbar)
     }
     
@@ -212,9 +198,9 @@ open class SnackbarController: RootController {
      */
     private func layoutSnackbar(status: SnackbarStatus) {
         if .bottom == snackbarAlignment {
-            snackbar.y = .visible == status ? view.height - snackbar.height - snackbarEdgeInsets.bottom : view.height
+            snackbar.frame.origin.y = .visible == status ? view.bounds.height - snackbar.bounds.height - snackbarEdgeInsets.bottom : view.bounds.height
         } else {
-            snackbar.y = .visible == status ? snackbarEdgeInsets.top : -snackbar.height
+            snackbar.frame.origin.y = .visible == status ? snackbarEdgeInsets.top : -snackbar.bounds.height
         }
     }
 }

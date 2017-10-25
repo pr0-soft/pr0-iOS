@@ -94,10 +94,10 @@ private class FontLoader {
 				let font = CGFont(provider)
                 
                 var error: Unmanaged<CFError>?
-                if !CTFontManagerRegisterGraphicsFont(font, &error) {
+                if !CTFontManagerRegisterGraphicsFont(font!, &error) {
                     let errorDescription = CFErrorCopyDescription(error!.takeUnretainedValue())
 					let nsError = error!.takeUnretainedValue() as Any as! Error
-                    NSException(name: .internalInconsistencyException, reason: errorDescription as? String, userInfo: [NSUnderlyingErrorKey: nsError as Any]).raise()
+                    NSException(name: .internalInconsistencyException, reason: errorDescription as String?, userInfo: [NSUnderlyingErrorKey: nsError as Any]).raise()
                 }
             }
         }

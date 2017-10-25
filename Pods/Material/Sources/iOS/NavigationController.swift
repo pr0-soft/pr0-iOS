@@ -30,7 +30,7 @@
 
 import UIKit
 
-extension UINavigationController {
+extension NavigationController {
     /// Device status bar style.
     open var statusBarStyle: UIStatusBarStyle {
         get {
@@ -108,8 +108,7 @@ open class NavigationController: UINavigationController {
     
     open override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        navigationBar.setNeedsLayout()
-        navigationBar.layoutIfNeeded()
+        layoutSubviews()
     }
     
 	/**
@@ -120,19 +119,26 @@ open class NavigationController: UINavigationController {
      when subclassing.
      */
 	open func prepare() {
+        isMotionEnabled = true
         navigationBar.heightPreset = .normal
-        navigationBar.width = view.width
         
         view.clipsToBounds = true
 		view.backgroundColor = .white
         view.contentScaleFactor = Screen.scale
         
         // This ensures the panning gesture is available when going back between views.
-		if let v = interactivePopGestureRecognizer {
-			v.isEnabled = true
-			v.delegate = self
-		}
+        if let v = interactivePopGestureRecognizer {
+            v.isEnabled = true
+            v.delegate = self
+        }
 	}
+    
+    /// Calls the layout functions for the view heirarchy.
+    open func layoutSubviews() {
+        navigationBar.updateConstraints()
+        navigationBar.setNeedsLayout()
+        navigationBar.layoutIfNeeded()
+    }
 }
 
 extension NavigationController: UINavigationBarDelegate {
@@ -146,17 +152,28 @@ extension NavigationController: UINavigationBarDelegate {
      */
     public func navigationBar(_ navigationBar: UINavigationBar, shouldPush item: UINavigationItem) -> Bool {
         if let v = navigationBar as? NavigationBar {
-            item.backButton.addTarget(self, action: #selector(handleBackButton), for: .touchUpInside)
-            item.backButton.image = v.backButtonImage
-            item.leftViews.insert(item.backButton, at: 0)
+            if nil == item.backButton.image && nil == item.backButton.title {
+                item.backButton.image = v.backButtonImage
+            }
+            
+            item.backButton.addTarget(self, action: #selector(handle(backButton:)), for: .touchUpInside)
+            
+            if !item.backButton.isHidden {
+                item.leftViews.insert(item.backButton, at: 0)
+            }
+            
+            item.hidesBackButton = false
+            item.setHidesBackButton(true, animated: false)
+         
             v.layoutNavigationItem(item: item)
         }
+        
         return true
     }
     
-    /// Handler for the back button.
+    /// Handler for the backbutton.
     @objc
-    internal func handleBackButton() {
+    internal func handle(backButton: UIButton) {
         popViewController(animated: true)
     }
 }

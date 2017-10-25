@@ -30,6 +30,12 @@
 
 import UIKit
 
+@objc(FABMenuItemTitleLabelPosition)
+public enum FABMenuItemTitleLabelPosition: Int {
+    case left
+    case right
+}
+
 @objc(FABMenuDirection)
 public enum FABMenuDirection: Int {
     case up
@@ -42,16 +48,12 @@ open class FABMenuItem: View {
     /// A reference to the titleLabel.
     open let titleLabel = UILabel()
     
+    /// The titleLabel side.
+    open var titleLabelPosition = FABMenuItemTitleLabelPosition.left
+    
     /// A reference to the fabButton.
     open let fabButton = FABButton()
     
-    /**
-     Prepares the view instance when intialized. When subclassing,
-     it is recommended to override the prepare method
-     to initialize property values and other setup operations.
-     The super.prepare method should always be called immediately
-     when subclassing.
-     */
     open override func prepare() {
         super.prepare()
         backgroundColor = nil
@@ -90,10 +92,17 @@ extension FABMenuItem {
         let interimSpace = InterimSpacePresetToValue(preset: .interimSpace6)
         
         titleLabel.sizeToFit()
-        titleLabel.width += 1.5 * interimSpace
-        titleLabel.height += interimSpace / 2
-        titleLabel.y = (height - titleLabel.height) / 2
-        titleLabel.x = -titleLabel.width - interimSpace
+        titleLabel.frame.size.width += 1.5 * interimSpace
+        titleLabel.frame.size.height += interimSpace / 2
+        titleLabel.frame.origin.y = (bounds.height - titleLabel.bounds.height) / 2
+        
+        switch titleLabelPosition {
+        case .left:
+            titleLabel.frame.origin.x = -titleLabel.bounds.width - interimSpace
+        case .right:
+            titleLabel.frame.origin.x = frame.bounds.width + interimSpace
+        }
+        
         titleLabel.alpha = 0
         titleLabel.isHidden = false
         
@@ -218,8 +227,8 @@ open class FABMenu: View {
         }
     }
     
-    /// An internal handler for the FABButton.
-    internal var handleFABButtonCallback: ((UIButton) -> Void)?
+    /// An open handler for the FABButton.
+    open var handleFABButtonCallback: ((UIButton) -> Void)?
     
     /// An internal handler for the open function.
     internal var handleOpenCallback: (() -> Void)?
@@ -341,7 +350,7 @@ extension FABMenu {
      - Parameter animations: An animation block to execute on each view's animation.
      - Parameter completion: A completion block to execute on each view's animation.
      */
-    internal func open(isTriggeredByUserInteraction: Bool, duration: TimeInterval = 0.15, delay: TimeInterval = 0, usingSpringWithDamping: CGFloat = 0.5, initialSpringVelocity: CGFloat = 0, options: UIViewAnimationOptions = [], animations: ((UIView) -> Void)? = nil, completion: ((UIView) -> Void)? = nil) {
+    open func open(isTriggeredByUserInteraction: Bool, duration: TimeInterval = 0.15, delay: TimeInterval = 0, usingSpringWithDamping: CGFloat = 0.5, initialSpringVelocity: CGFloat = 0, options: UIViewAnimationOptions = [], animations: ((UIView) -> Void)? = nil, completion: ((UIView) -> Void)? = nil) {
         handleOpenCallback?()
         
         if isTriggeredByUserInteraction {
@@ -390,7 +399,7 @@ extension FABMenu {
      - Parameter animations: An animation block to execute on each view's animation.
      - Parameter completion: A completion block to execute on each view's animation.
      */
-    internal func close(isTriggeredByUserInteraction: Bool, duration: TimeInterval = 0.15, delay: TimeInterval = 0, usingSpringWithDamping: CGFloat = 0.5, initialSpringVelocity: CGFloat = 0, options: UIViewAnimationOptions = [], animations: ((UIView) -> Void)? = nil, completion: ((UIView) -> Void)? = nil) {
+    open func close(isTriggeredByUserInteraction: Bool, duration: TimeInterval = 0.15, delay: TimeInterval = 0, usingSpringWithDamping: CGFloat = 0.5, initialSpringVelocity: CGFloat = 0, options: UIViewAnimationOptions = [], animations: ((UIView) -> Void)? = nil, completion: ((UIView) -> Void)? = nil) {
         handleCloseCallback?()
         
         if isTriggeredByUserInteraction {
